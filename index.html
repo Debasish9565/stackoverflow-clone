@@ -172,10 +172,12 @@
         width: 300px;
         display: block;
         unicode-bidi: isolate;
+        background-color: #bcbcbcf4;
       }
 
       .widget {
-        box-shadow: 3px 3px 10px rgb(0 0 0 / 5%), -3px -3px 10px rgb(0 0 0 / 5%);
+        box-shadow: 3px 3px 10px rgba(31, 30, 30, 0.05),
+          -3px -3px 10px rgb(0 0 0 / 5%);
         margin-top: 10px;
       }
 
@@ -186,12 +188,12 @@
 
       .rightside-bar-div-1,
       .widget h4 {
-        border: 1px solid #f1e5bc;
+        border: 1px solid #bcbcbcf4;
         padding: 15px;
       }
 
       .widget h4 {
-        background-color: #fbf3d5;
+        background-color: #bcbcbcf4;
         margin: 0;
       }
 
@@ -212,7 +214,7 @@
       }
 
       .rightside-bar-div-1 {
-        background-color: #fdf7e2;
+        background-color: #bcbcbcf4;
       }
 
       .rightside-bar-div-1 .rightside-bar-div-2 {
@@ -454,7 +456,7 @@
           <button class="active" onclick="filterQuestions('activity')">
             Interesting
           </button>
-          <button onclick="filterQuestions('bountied')">Bountied</button>
+          <button onclick="filterQuestions('votes')">Bountied</button>
           <button onclick="filterQuestions('hot')">Hot</button>
           <button onclick="filterQuestions('week')">Week</button>
           <button onclick="filterQuestions('month')">Month</button>
@@ -543,30 +545,35 @@
     </div>
 
     <script>
+      /* const filtersContainer = document.querySelector(".filters");
+
+      filtersContainer.addEventListener("click", (event) => {
+        const clickedButton = event.target.closest("button");
+        if (!clickedButton) return; // Ignore clicks outside buttons
+
+        // Remove active class from all buttons
+        document
+          .querySelectorAll(".filters button")
+          .forEach((button) => button.classList.remove("active"));
+
+        // Add active class to clicked button
+        clickedButton.classList.add("active");
+
+        // Get the selected filter
+        const selectedFilter = clickedButton.dataset.filter;
+
+        // Call fetchQuestions with the filter
+        fetchQuestions(selectedFilter);
+      }); */
       // Fetch Questions from StackOverflow API
       async function fetchQuestions(filter = "activity") {
-        const url = `https://api.stackexchange.com/docs/questions#order=desc&sort=${filter}&filter=default&site=stackoverflow`;
-
-        try {
-          const response = await fetch(url, {
-            method: "GET",
-          });
-          const data = await response.json();
-
-          if (data.items && data.items.length > 0) {
-            displayQuestions(data.items);
-          } else {
-            document.getElementById("questions").innerHTML =
-              "<p>No questions found.</p>";
-          }
-        } catch (error) {
-          console.error("Error fetching data:", error);
-          document.getElementById("questions").innerHTML =
-            "<p>Failed to fetch data.</p>";
-        }
+        const response = await fetch(
+          `https://api.stackexchange.com/2.3/questions?order=desc&sort=${filter}&site=stackoverflow`
+        );
+        const data = await response.json();
+        displayQuestions(data.items);
       }
 
-      // Function to display questions on the page
       function displayQuestions(questions) {
         const questionsContainer = document.getElementById("questions");
         questionsContainer.innerHTML = "";
@@ -575,7 +582,7 @@
           const questionCard = document.createElement("div");
           questionCard.className = "question-card";
           questionCard.innerHTML = `
-      <h3><a href="${question.link}" target="_blank">${question.title}</a></h3>
+      <h3>${question.title}</h3>
       <div class="tags">
         ${question.tags.map((tag) => `<span>${tag}</span>`).join("")}
       </div>
@@ -589,50 +596,31 @@
         });
       }
 
-      // Function to search questions by query
-      async function searchQuestions(query) {
-        if (query.trim() === "") {
-          document.getElementById("questions").innerHTML = "";
-          return;
-        }
-
-        try {
-          const response = await fetch(
-            `https://api.stackexchange.com/2.3/search?order=desc&sort=activity&intitle=${encodeURIComponent(
-              query
-            )}&site=stackoverflow`
-          );
-          const data = await response.json();
-
-          if (data.items && data.items.length > 0) {
-            displayQuestions(data.items);
-          } else {
-            document.getElementById("questions").innerHTML =
-              "<p>No results found for your search.</p>";
-          }
-        } catch (error) {
-          console.error("Error fetching data:", error);
-          document.getElementById("questions").innerHTML =
-            "<p>Failed to fetch data.</p>";
-        }
+      // Search Function
+      async function searchQuestions() {
+        const query = document.getElementById("search-bar").value;
+        const response = await fetch(
+          `https://api.stackexchange.com/2.3/search?order=desc&sort=relevance&intitle=${query}&site=stackoverflow`
+        );
+        const data = await response.json();
+        displayQuestions(data.items);
       }
 
-      // Function to filter questions by category
+      // Filter Function
       function filterQuestions(filter) {
         document
           .querySelectorAll(".filters button")
           .forEach((button) => button.classList.remove("active"));
-
         document
           .querySelector(
             `.filters button[onclick="filterQuestions('${filter}')"]`
           )
           .classList.add("active");
-
-        fetchQuestions(filter); // Fetch questions based on selected filter
+        fetchQuestions(filter);
       }
 
-      fetchQuestions("activity");
+      // Initial Fetch
+      fetchQuestions();
     </script>
   </body>
 </html>
